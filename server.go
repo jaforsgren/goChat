@@ -4,8 +4,10 @@ import (
 	"bufio"
 	"fmt"
 	"log"
+	"math/rand"
 	"net"
 	"sync"
+	"time"
 )
 
 type Client struct {
@@ -19,6 +21,8 @@ var (
 )
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
+
 	listener, err := net.Listen("tcp", ":8080")
 	if err != nil {
 		log.Fatalf("Failed to start server: %v", err)
@@ -27,6 +31,7 @@ func main() {
 	log.Println("Chat server started on :8080")
 
 	for {
+
 		conn, err := listener.Accept()
 		if err != nil {
 			log.Printf("Failed to accept connection: %v", err)
@@ -39,6 +44,10 @@ func main() {
 func handleClient(conn net.Conn) {
 	defer conn.Close()
 
+	clientNames := [6]string{"Kalle", "Lisa", "Anna", "Karin", "Tore", "Orvar"}
+	name := clientNames[rand.Intn(len(clientNames))]
+	log.Printf("%v connected!!!!", name)
+
 	client := &Client{conn: conn}
 	clientsMu.Lock()
 	clients[client] = true
@@ -46,7 +55,9 @@ func handleClient(conn net.Conn) {
 
 	scanner := bufio.NewScanner(conn)
 	for scanner.Scan() {
-		msg := scanner.Text()
+		msg := fmt.Sprintf("%v :  '%s'", name, scanner.Text())
+
+		// msg := scanner.Text()
 		broadcast(msg, client)
 	}
 
